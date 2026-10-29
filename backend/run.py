@@ -21,6 +21,11 @@ def init_db():
             
         db.session.commit()
 
-if __name__ == '__main__':
+# Initialize DB tables and seed data if needed
+try:
     init_db()
+except Exception as e:
+    print(f"Database initialization notice: {e}")
+
+if __name__ == '__main__':
     app.run(debug=True, port=5000)

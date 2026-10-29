@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Download, Eye, FileText, IndianRupee, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Download, IndianRupee, Trash2 } from 'lucide-react';
 import api from '../services/api';
 
 const History = () => {

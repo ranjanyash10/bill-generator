@@ -1,0 +1,62 @@
+name: bill-generator
+region: blr
+features:
+- buildpack-stack=ubuntu-22
+
+databases:
+- engine: PG
+  name: bill-generator-db
+  version: "16"
+
+services:
+- name: backend
+  source_dir: backend
+  dockerfile_path: backend/Dockerfile
+  http_port: 8080
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  git:
+    branch: main
+    repo_clone_url: https://github.com/ranjanyash10/bill-generator.git
+  envs:
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    value: ${bill-generator-db.DATABASE_URL}
+  - key: SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    value: bill-generator-prod-secret-key-8a9d
+  - key: JWT_SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    value: bill-generator-prod-jwt-secret-key-3f1b
+  health_check:
+    http_path: /api/health
+    initial_delay_seconds: 20
+    period_seconds: 15
+    timeout_seconds: 5
+    success_threshold: 1
+    failure_threshold: 4
+
+static_sites:
+- name: frontend
+  source_dir: frontend
+  output_dir: dist
+  build_command: npm run build
+  index_document: index.html
+  catchall_document: index.html
+  git:
+    branch: main
+    repo_clone_url: https://github.com/ranjanyash10/bill-generator.git
+
+ingress:
+  rules:
+  - component:
+      name: backend
+      preserve_path_prefix: true
+    match:
+      path:
+        prefix: /api
+  - component:
+      name: frontend
+    match:
+      path:
+        prefix: /

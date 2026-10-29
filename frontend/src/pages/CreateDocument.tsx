@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Save, Send } from 'lucide-react';
 import api from '../services/api';
@@ -48,9 +48,9 @@ const CreateDocument = () => {
       
       if (name === 'payment_status') {
         if (value === 'PAID') {
-          nextState.amount_received = calculateTotal(nextState as any);
+          nextState.amount_received = calculateTotal(nextState as any).toString();
         } else if (value === 'UNPAID') {
-          nextState.amount_received = 0;
+          nextState.amount_received = '0';
         }
       }
       return nextState;

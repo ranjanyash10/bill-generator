@@ -32,4 +32,9 @@ def create_app(config_class=Config):
     app.register_blueprint(doc_bp, url_prefix='/api/documents')
     app.register_blueprint(settings_bp, url_prefix='/api/settings')
 
+    @app.route('/api/health')
+    def health():
+        return {'status': 'healthy', 'service': 'bill-generator-backend'}, 200
+
     return app
+
