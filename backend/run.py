@@ -21,6 +21,22 @@ def init_db():
             
         db.session.commit()
 
+        # Migrate existing document_item table schema if needed
+        try:
+            with db.engine.connect() as conn:
+                dialect = db.engine.dialect.name
+                if dialect == 'postgresql':
+                    conn.execute(db.text("ALTER TABLE document_item ADD COLUMN IF NOT EXISTS hsn_sac VARCHAR(50);"))
+                    conn.commit()
+                elif dialect == 'sqlite':
+                    try:
+                        conn.execute(db.text("ALTER TABLE document_item ADD COLUMN hsn_sac VARCHAR(50);"))
+                        conn.commit()
+                    except Exception:
+                        pass
+        except Exception as mig_err:
+            print(f"Migration note: {mig_err}")
+
 # Initialize DB tables and seed data if needed
 try:
     init_db()

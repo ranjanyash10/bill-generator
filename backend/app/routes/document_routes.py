@@ -55,6 +55,7 @@ def create_document():
         price = float(item_data.get('unit_price', 0))
         item = DocumentItem(
             description=item_data['description'],
+            hsn_sac=item_data.get('hsn_sac') or item_data.get('hsn') or '',
             quantity=qty,
             unit_price=price,
             total=qty * price
@@ -139,7 +140,7 @@ def get_document(doc_id):
         'customer_name': doc.customer_name,
         'total_amount': doc.total_amount,
         'date': doc.date.strftime('%Y-%m-%d'),
-        'items': [{'description': i.description, 'quantity': i.quantity, 'unit_price': i.unit_price, 'total': i.total} for i in doc.items]
+        'items': [{'description': i.description, 'hsn_sac': i.hsn_sac or '', 'quantity': i.quantity, 'unit_price': i.unit_price, 'total': i.total} for i in doc.items]
     })
 
 @doc_bp.route('/<int:doc_id>/pdf', methods=['GET'])

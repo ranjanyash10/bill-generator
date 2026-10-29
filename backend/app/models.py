@@ -87,6 +87,7 @@ class DocumentItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
     description = db.Column(db.String(255), nullable=False)
+    hsn_sac = db.Column(db.String(50), nullable=True)
     quantity = db.Column(db.Float, default=1.0)
     unit_price = db.Column(db.Float, default=0.0)
     total = db.Column(db.Float, default=0.0)
