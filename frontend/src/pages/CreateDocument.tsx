@@ -20,6 +20,7 @@ const CreateDocument = () => {
     payment_mode: '',
     transaction_reference: '',
     notes: '',
+    tax_type: 'INTRA_STATE',
     tax_rate: 0,
     discount_rate: 0,
     discount: 0,
@@ -328,12 +329,46 @@ const CreateDocument = () => {
                   className="w-24 px-2 py-1 bg-white border border-gray-300 rounded-md text-right outline-none focus:ring-1 focus:ring-rose-500" 
                 />
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Discount Amount (₹)</span>
-                <span className="font-medium text-rose-600">-₹{(calculateSubtotal() * (Number(formData.discount_rate) || 0) / 100).toFixed(2)}</span>
+              {Number(formData.discount_rate) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Discount Amount (₹)</span>
+                  <span className="font-medium text-rose-600">-₹{(calculateSubtotal() * (Number(formData.discount_rate) || 0) / 100).toFixed(2)}</span>
+                </div>
+              )}
+
+              {/* GST Supply Type Toggle */}
+              <div className="pt-2 border-t border-rose-200/70">
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Supply Type (GST)
+                </label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, tax_type: 'INTRA_STATE' }))}
+                    className={`py-1.5 px-2 rounded-lg border font-medium text-center transition-all ${
+                      formData.tax_type === 'INTRA_STATE'
+                        ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-rose-50/60'
+                    }`}
+                  >
+                    Intra-State (CGST + SGST)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, tax_type: 'INTER_STATE' }))}
+                    className={`py-1.5 px-2 rounded-lg border font-medium text-center transition-all ${
+                      formData.tax_type === 'INTER_STATE'
+                        ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-rose-50/60'
+                    }`}
+                  >
+                    Inter-State (IGST)
+                  </button>
+                </div>
               </div>
+
               <div className="flex justify-between text-sm items-center">
-                <span className="text-gray-600">Tax / GST Rate (%)</span>
+                <span className="text-gray-600">Total GST Rate (%)</span>
                 <input 
                   type="number" 
                   min="0" 
@@ -344,6 +379,39 @@ const CreateDocument = () => {
                   className="w-24 px-2 py-1 bg-white border border-gray-300 rounded-md text-right outline-none focus:ring-1 focus:ring-rose-500" 
                 />
               </div>
+
+              {/* Dynamic GST Breakdown */}
+              {Number(formData.tax_rate) > 0 && (() => {
+                const subtotal = calculateSubtotal();
+                const discount = subtotal * ((Number(formData.discount_rate) || 0) / 100);
+                const taxable = Math.max(0, subtotal - discount);
+                const totalTax = taxable * ((Number(formData.tax_rate) || 0) / 100);
+
+                if (formData.tax_type === 'INTER_STATE') {
+                  return (
+                    <div className="flex justify-between text-xs text-rose-800 bg-rose-100/70 px-2.5 py-1.5 rounded-lg border border-rose-200">
+                      <span className="font-medium">IGST ({Number(formData.tax_rate)}%)</span>
+                      <span className="font-semibold font-mono">₹{totalTax.toFixed(2)}</span>
+                    </div>
+                  );
+                } else {
+                  const halfRate = (Number(formData.tax_rate) || 0) / 2;
+                  const halfTax = totalTax / 2;
+                  return (
+                    <div className="space-y-1 bg-rose-100/70 p-2.5 rounded-lg border border-rose-200 text-xs text-rose-800">
+                      <div className="flex justify-between">
+                        <span className="font-medium">CGST ({halfRate}%)</span>
+                        <span className="font-semibold font-mono">₹{halfTax.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="font-medium">SGST ({halfRate}%)</span>
+                        <span className="font-semibold font-mono">₹{halfTax.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
+
               <div className="pt-3 border-t border-rose-200 flex justify-between items-center">
                 <span className="font-bold text-gray-900">Total Amount</span>
                 <span className="font-bold text-rose-800 text-xl font-mono">₹{calculateTotal().toFixed(2)}</span>

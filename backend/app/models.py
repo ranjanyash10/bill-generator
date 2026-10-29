@@ -67,8 +67,15 @@ class Document(db.Model):
     
     subtotal = db.Column(db.Float, default=0.0)
     discount = db.Column(db.Float, default=0.0)
+    tax_type = db.Column(db.String(20), default='INTRA_STATE') # INTRA_STATE (CGST + SGST) or INTER_STATE (IGST)
     tax_rate = db.Column(db.Float, default=0.0)
     tax_amount = db.Column(db.Float, default=0.0)
+    cgst_rate = db.Column(db.Float, default=0.0)
+    cgst_amount = db.Column(db.Float, default=0.0)
+    sgst_rate = db.Column(db.Float, default=0.0)
+    sgst_amount = db.Column(db.Float, default=0.0)
+    igst_rate = db.Column(db.Float, default=0.0)
+    igst_amount = db.Column(db.Float, default=0.0)
     total_amount = db.Column(db.Float, default=0.0)
     amount_received = db.Column(db.Float, default=0.0)
     

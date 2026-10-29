@@ -26,13 +26,27 @@ class PDFService:
         
         elements = []
         
-        # Register Custom Fonts
+        # Register TrueType Fonts supporting Unicode (specifically Indian Rupee symbol ₹)
         font_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fonts')
+        dejavu_regular = os.path.join(font_dir, 'DejaVuSans.ttf')
+        dejavu_bold = os.path.join(font_dir, 'DejaVuSans-Bold.ttf')
+        
+        if not os.path.exists(dejavu_regular):
+            for p in ['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', '/usr/share/fonts/dejavu/DejaVuSans.ttf']:
+                if os.path.exists(p):
+                    dejavu_regular = p
+                    break
+        if not os.path.exists(dejavu_bold):
+            for p in ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf', '/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf']:
+                if os.path.exists(p):
+                    dejavu_bold = p
+                    break
+
         try:
-            pdfmetrics.registerFont(TTFont('Montserrat-Bold', os.path.join(font_dir, 'Montserrat-Bold.ttf')))
-            pdfmetrics.registerFont(TTFont('Montserrat-Regular', os.path.join(font_dir, 'Montserrat-Regular.ttf')))
-            title_font = 'Montserrat-Bold'
-            body_font = 'Montserrat-Regular'
+            pdfmetrics.registerFont(TTFont('DejaVuSans', dejavu_regular))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', dejavu_bold))
+            title_font = 'DejaVuSans-Bold'
+            body_font = 'DejaVuSans'
         except Exception:
             title_font = 'Helvetica-Bold'
             body_font = 'Helvetica'
@@ -275,8 +289,8 @@ class PDFService:
             Paragraph("<b>Description / Particulars</b>", tbl_hdr_style),
             Paragraph("<b>HSN / SAC</b>", tbl_hdr_center),
             Paragraph("<b>Qty</b>", tbl_hdr_right),
-            Paragraph("<b>Rate (Rs.)</b>", tbl_hdr_right),
-            Paragraph("<b>Amount (Rs.)</b>", tbl_hdr_right)
+            Paragraph("<b>Rate (₹)</b>", tbl_hdr_right),
+            Paragraph("<b>Amount (₹)</b>", tbl_hdr_right)
         ]]
         
         for i, item in enumerate(document.items, 1):
@@ -286,8 +300,8 @@ class PDFService:
                 Paragraph(item.description, tbl_body_style),
                 Paragraph(str(hsn), tbl_body_center),
                 Paragraph(f"{item.quantity:g}", tbl_body_right),
-                Paragraph(f"{item.unit_price:,.2f}", tbl_body_right),
-                Paragraph(f"{item.total:,.2f}", tbl_body_right)
+                Paragraph(f"₹{item.unit_price:,.2f}", tbl_body_right),
+                Paragraph(f"₹{item.total:,.2f}", tbl_body_right)
             ])
             
         items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
@@ -323,31 +337,63 @@ class PDFService:
         left_paragraph = Paragraph("<br/><br/>".join(left_notes), card_text_style) if left_notes else Paragraph("", card_text_style)
         
         totals_data = [
-            [Paragraph("Subtotal:", totals_label_style), Paragraph(f"Rs. {document.subtotal:,.2f}", totals_val_style)]
+            [Paragraph("Subtotal:", totals_label_style), Paragraph(f"₹{document.subtotal:,.2f}", totals_val_style)]
         ]
         
         if document.discount > 0:
             totals_data.append([
                 Paragraph("Discount:", totals_label_style),
-                Paragraph(f"<font color='#dc2626'>-Rs. {document.discount:,.2f}</font>", totals_val_style)
+                Paragraph(f"<font color='#dc2626'>-₹{document.discount:,.2f}</font>", totals_val_style)
             ])
             
         taxable_value = document.subtotal - document.discount
-        if document.tax_amount > 0:
+        tax_type = getattr(document, 'tax_type', 'INTRA_STATE') or 'INTRA_STATE'
+        
+        if (document.tax_amount or 0) > 0 or (document.tax_rate or 0) > 0:
             totals_data.append([
                 Paragraph("Taxable Value:", totals_label_style),
-                Paragraph(f"Rs. {taxable_value:,.2f}", totals_val_style)
+                Paragraph(f"₹{taxable_value:,.2f}", totals_val_style)
             ])
-            tax_label = f"GST / Tax ({document.tax_rate:g}%):"
-            totals_data.append([
-                Paragraph(tax_label, totals_label_style),
-                Paragraph(f"Rs. {document.tax_amount:,.2f}", totals_val_style)
-            ])
+            
+            if tax_type == 'INTER_STATE' or (getattr(document, 'igst_amount', 0) or 0) > 0:
+                igst_r = getattr(document, 'igst_rate', None)
+                if igst_r is None:
+                    igst_r = document.tax_rate or 0.0
+                igst_a = getattr(document, 'igst_amount', None)
+                if igst_a is None or igst_a == 0:
+                    igst_a = document.tax_amount or 0.0
+                totals_data.append([
+                    Paragraph(f"IGST ({igst_r:g}%):", totals_label_style),
+                    Paragraph(f"₹{igst_a:,.2f}", totals_val_style)
+                ])
+            else:
+                cgst_r = getattr(document, 'cgst_rate', None)
+                if cgst_r is None or cgst_r == 0:
+                    cgst_r = round((document.tax_rate or 0.0) / 2.0, 2)
+                sgst_r = getattr(document, 'sgst_rate', None)
+                if sgst_r is None or sgst_r == 0:
+                    sgst_r = round((document.tax_rate or 0.0) / 2.0, 2)
+                    
+                cgst_a = getattr(document, 'cgst_amount', None)
+                if cgst_a is None or cgst_a == 0:
+                    cgst_a = round((document.tax_amount or 0.0) / 2.0, 2)
+                sgst_a = getattr(document, 'sgst_amount', None)
+                if sgst_a is None or sgst_a == 0:
+                    sgst_a = round((document.tax_amount or 0.0) - cgst_a, 2)
+                    
+                totals_data.append([
+                    Paragraph(f"CGST ({cgst_r:g}%):", totals_label_style),
+                    Paragraph(f"₹{cgst_a:,.2f}", totals_val_style)
+                ])
+                totals_data.append([
+                    Paragraph(f"SGST ({sgst_r:g}%):", totals_label_style),
+                    Paragraph(f"₹{sgst_a:,.2f}", totals_val_style)
+                ])
             
         grand_total_row_idx = len(totals_data)
         totals_data.append([
             Paragraph("Total Amount:", grand_total_label),
-            Paragraph(f"Rs. {document.total_amount:,.2f}", grand_total_val)
+            Paragraph(f"₹{document.total_amount:,.2f}", grand_total_val)
         ])
         
         if document.doc_type == 'BILL':
@@ -355,12 +401,12 @@ class PDFService:
             balance = max(0.0, document.total_amount - received)
             totals_data.append([
                 Paragraph("Amount Received:", totals_label_style),
-                Paragraph(f"Rs. {received:,.2f}", totals_val_style)
+                Paragraph(f"₹{received:,.2f}", totals_val_style)
             ])
             balance_color = '#dc2626' if balance > 0 else '#059669'
             totals_data.append([
                 Paragraph("Balance Due:", totals_label_style),
-                Paragraph(f"<font color='{balance_color}'><b>Rs. {balance:,.2f}</b></font>", totals_val_style)
+                Paragraph(f"<font color='{balance_color}'><b>₹{balance:,.2f}</b></font>", totals_val_style)
             ])
             
         totals_col_widths = [1.8 * inch, 1.45 * inch]

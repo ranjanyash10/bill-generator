@@ -17,8 +17,26 @@ def create_document():
     subtotal = sum(float(item.get('quantity', 1)) * float(item.get('unit_price', 0)) for item in data.get('items', []))
     discount = float(data.get('discount', 0))
     tax_rate = float(data.get('tax_rate', 0))
-    taxable_amount = subtotal - discount
-    tax_amount = taxable_amount * (tax_rate / 100)
+    taxable_amount = max(0.0, subtotal - discount)
+    tax_type = data.get('tax_type', 'INTRA_STATE')
+
+    if tax_type == 'INTER_STATE':
+        cgst_rate = 0.0
+        cgst_amount = 0.0
+        sgst_rate = 0.0
+        sgst_amount = 0.0
+        igst_rate = tax_rate
+        igst_amount = round(taxable_amount * (igst_rate / 100.0), 2)
+        tax_amount = igst_amount
+    else:
+        cgst_rate = tax_rate / 2.0
+        sgst_rate = tax_rate / 2.0
+        cgst_amount = round(taxable_amount * (cgst_rate / 100.0), 2)
+        sgst_amount = round(taxable_amount * (sgst_rate / 100.0), 2)
+        igst_rate = 0.0
+        igst_amount = 0.0
+        tax_amount = cgst_amount + sgst_amount
+
     total_amount = taxable_amount + tax_amount
     payment_status = data.get('payment_status', 'UNPAID')
     if payment_status == 'PAID':
@@ -38,8 +56,15 @@ def create_document():
         gstin=data.get('gstin'),
         subtotal=subtotal,
         discount=discount,
+        tax_type=tax_type,
         tax_rate=tax_rate,
         tax_amount=tax_amount,
+        cgst_rate=cgst_rate,
+        cgst_amount=cgst_amount,
+        sgst_rate=sgst_rate,
+        sgst_amount=sgst_amount,
+        igst_rate=igst_rate,
+        igst_amount=igst_amount,
         total_amount=total_amount,
         amount_received=amount_received,
         payment_status=data.get('payment_status', 'UNPAID'),
@@ -138,9 +163,22 @@ def get_document(doc_id):
         'doc_type': doc.doc_type,
         'status': doc.status,
         'customer_name': doc.customer_name,
+        'subtotal': doc.subtotal,
+        'discount': doc.discount,
+        'tax_type': getattr(doc, 'tax_type', 'INTRA_STATE') or 'INTRA_STATE',
+        'tax_rate': doc.tax_rate,
+        'tax_amount': doc.tax_amount,
+        'cgst_rate': getattr(doc, 'cgst_rate', 0.0) or 0.0,
+        'cgst_amount': getattr(doc, 'cgst_amount', 0.0) or 0.0,
+        'sgst_rate': getattr(doc, 'sgst_rate', 0.0) or 0.0,
+        'sgst_amount': getattr(doc, 'sgst_amount', 0.0) or 0.0,
+        'igst_rate': getattr(doc, 'igst_rate', 0.0) or 0.0,
+        'igst_amount': getattr(doc, 'igst_amount', 0.0) or 0.0,
         'total_amount': doc.total_amount,
+        'amount_received': doc.amount_received,
+        'payment_status': doc.payment_status,
         'date': doc.date.strftime('%Y-%m-%d'),
-        'items': [{'description': i.description, 'hsn_sac': i.hsn_sac or '', 'quantity': i.quantity, 'unit_price': i.unit_price, 'total': i.total} for i in doc.items]
+        'items': [{'description': i.description, 'hsn_sac': getattr(i, 'hsn_sac', '') or '', 'quantity': i.quantity, 'unit_price': i.unit_price, 'total': i.total} for i in doc.items]
     })
 
 @doc_bp.route('/<int:doc_id>/pdf', methods=['GET'])
