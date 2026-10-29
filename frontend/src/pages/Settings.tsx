@@ -4,7 +4,7 @@ import api from '../services/api';
 
 const Settings = () => {
   const [companySettings, setCompanySettings] = useState({
-    name: '', address: '', phone: '', email: '', gstin: '', cin: ''
+    name: '', address: '', phone: '', email: '', gstin: '', cin: '', bank_details: ''
   });
   
   const [docSettings, setDocSettings] = useState({
@@ -89,6 +89,20 @@ const Settings = () => {
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Registered Address</label>
             <textarea name="address" rows={2} value={companySettings.address || ''} onChange={handleCompanyChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-company-blue outline-none"></textarea>
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Default Bank & Payment Details
+              <span className="text-xs text-gray-500 font-normal ml-2">(printed on every invoice)</span>
+            </label>
+            <textarea 
+              name="bank_details" 
+              rows={3} 
+              value={companySettings.bank_details || ''} 
+              onChange={handleCompanyChange} 
+              placeholder="e.g. Bank: HDFC Bank Ltd&#10;A/C No: 50200012345678&#10;IFSC: HDFC0001234&#10;UPI: company@okhdfcbank"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-company-blue outline-none text-sm font-mono"
+            ></textarea>
           </div>
         </div>
         <div className="mt-4 flex justify-end">

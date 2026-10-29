@@ -20,6 +20,7 @@ def manage_company_settings():
         settings.email = data.get('email', settings.email)
         settings.gstin = data.get('gstin', settings.gstin)
         settings.cin = data.get('cin', settings.cin)
+        settings.bank_details = data.get('bank_details', settings.bank_details)
         db.session.commit()
         
     return jsonify({
@@ -28,7 +29,8 @@ def manage_company_settings():
         'phone': settings.phone,
         'email': settings.email,
         'gstin': settings.gstin,
-        'cin': settings.cin
+        'cin': settings.cin,
+        'bank_details': settings.bank_details
     })
 
 @settings_bp.route('/document', methods=['GET', 'POST'])
