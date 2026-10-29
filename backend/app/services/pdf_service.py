@@ -7,6 +7,10 @@ import io
 import os
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+try:
+    from ..utils.currency import number_to_words_inr
+except Exception:
+    from app.utils.currency import number_to_words_inr
 
 class PDFService:
     @staticmethod
@@ -323,9 +327,32 @@ class PDFService:
             
         items_table.setStyle(TableStyle(tbl_styles))
         elements.append(items_table)
-        elements.append(Spacer(1, 0.15 * inch))
+        elements.append(Spacer(1, 0.10 * inch))
         
-        # 4. Totals and Notes Section
+        # 4. Amount in Words Banner
+        amount_words = number_to_words_inr(document.total_amount)
+        words_style = ParagraphStyle(
+            name='AmountWords',
+            parent=styles['Normal'],
+            fontName=body_font,
+            fontSize=8.5,
+            leading=12,
+            textColor=TEXT_DARK
+        )
+        words_paragraph = Paragraph(f"<b>Amount in Words:</b> <i>{amount_words}</i>", words_style)
+        words_table = Table([[words_paragraph]], colWidths=[7.25 * inch])
+        words_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), LIGHT_ROSE),
+            ('BOX', (0, 0), (-1, -1), 0.75, BORDER_ROSE),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(words_table)
+        elements.append(Spacer(1, 0.12 * inch))
+        
+        # 5. Totals and Notes Section
         left_notes = []
         if document.notes:
             left_notes.append(f"<b>Notes:</b><br/>{document.notes.replace(chr(10), '<br/>')}")

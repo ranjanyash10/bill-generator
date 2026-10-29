@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Save, Send } from 'lucide-react';
 import api from '../services/api';
+import { numberToWordsINR } from '../utils/currency';
 
 const CreateDocument = () => {
   const { type } = useParams();
@@ -415,6 +416,11 @@ const CreateDocument = () => {
               <div className="pt-3 border-t border-rose-200 flex justify-between items-center">
                 <span className="font-bold text-gray-900">Total Amount</span>
                 <span className="font-bold text-rose-800 text-xl font-mono">₹{calculateTotal().toFixed(2)}</span>
+              </div>
+
+              <div className="bg-white/80 p-2.5 rounded-lg border border-rose-200/80 text-xs">
+                <span className="font-semibold text-gray-600 block mb-0.5">Amount in Words:</span>
+                <span className="font-medium text-rose-950 italic leading-relaxed">{numberToWordsINR(calculateTotal())}</span>
               </div>
               {docType === 'BILL' && (
                 <div className="pt-3 border-t border-rose-200 flex justify-between text-sm items-center">

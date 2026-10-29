@@ -4,6 +4,10 @@ from ..models import db, Document, DocumentItem, User, CompanySettings
 from ..services.numbering_service import NumberingService
 from ..services.pdf_service import PDFService
 from datetime import datetime
+try:
+    from ..utils.currency import number_to_words_inr
+except Exception:
+    from app.utils.currency import number_to_words_inr
 
 doc_bp = Blueprint('documents', __name__)
 
@@ -175,6 +179,7 @@ def get_document(doc_id):
         'igst_rate': getattr(doc, 'igst_rate', 0.0) or 0.0,
         'igst_amount': getattr(doc, 'igst_amount', 0.0) or 0.0,
         'total_amount': doc.total_amount,
+        'amount_in_words': number_to_words_inr(doc.total_amount),
         'amount_received': doc.amount_received,
         'payment_status': doc.payment_status,
         'date': doc.date.strftime('%Y-%m-%d'),
