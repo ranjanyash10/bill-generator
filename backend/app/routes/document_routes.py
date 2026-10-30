@@ -74,6 +74,7 @@ def create_document():
         payment_status=data.get('payment_status', 'UNPAID'),
         payment_mode=data.get('payment_mode'),
         transaction_reference=data.get('transaction_reference'),
+        bank_details=data.get('bank_details'),
         notes=data.get('notes'),
         created_by_id=user_id,
         date=datetime.strptime(data.get('date', datetime.utcnow().strftime('%Y-%m-%d')), '%Y-%m-%d')
@@ -181,6 +182,7 @@ def get_document(doc_id):
         'total_amount': doc.total_amount,
         'amount_in_words': number_to_words_inr(doc.total_amount),
         'amount_received': doc.amount_received,
+        'bank_details': getattr(doc, 'bank_details', '') or '',
         'payment_status': doc.payment_status,
         'date': doc.date.strftime('%Y-%m-%d'),
         'items': [{'description': i.description, 'hsn_sac': getattr(i, 'hsn_sac', '') or '', 'quantity': i.quantity, 'unit_price': i.unit_price, 'total': i.total} for i in doc.items]

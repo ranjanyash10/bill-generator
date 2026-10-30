@@ -327,38 +327,19 @@ class PDFService:
             
         items_table.setStyle(TableStyle(tbl_styles))
         elements.append(items_table)
-        elements.append(Spacer(1, 0.10 * inch))
+        elements.append(Spacer(1, 0.15 * inch))
         
-        # 4. Amount in Words Banner
-        amount_words = number_to_words_inr(document.total_amount)
-        words_style = ParagraphStyle(
-            name='AmountWords',
-            parent=styles['Normal'],
-            fontName=body_font,
-            fontSize=8.5,
-            leading=12,
-            textColor=TEXT_DARK
-        )
-        words_paragraph = Paragraph(f"<b>Amount in Words:</b> <i>{amount_words}</i>", words_style)
-        words_table = Table([[words_paragraph]], colWidths=[7.25 * inch])
-        words_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), LIGHT_ROSE),
-            ('BOX', (0, 0), (-1, -1), 0.75, BORDER_ROSE),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-        ]))
-        elements.append(words_table)
-        elements.append(Spacer(1, 0.12 * inch))
-        
-        # 5. Totals and Notes Section
+        # 4. Totals and Notes Section
         left_notes = []
         if document.notes:
             left_notes.append(f"<b>Notes:</b><br/>{document.notes.replace(chr(10), '<br/>')}")
             
-        if company_settings and company_settings.bank_details:
-            bank_fmt = company_settings.bank_details.replace('\n', '<br/>')
+        bank_details_val = getattr(document, 'bank_details', None)
+        if not bank_details_val and company_settings and company_settings.bank_details:
+            bank_details_val = company_settings.bank_details
+            
+        if bank_details_val:
+            bank_fmt = bank_details_val.replace('\n', '<br/>')
             left_notes.append(f"<b>Bank & Payment Details:</b><br/>{bank_fmt}")
             
         left_paragraph = Paragraph("<br/><br/>".join(left_notes), card_text_style) if left_notes else Paragraph("", card_text_style)
@@ -461,9 +442,32 @@ class PDFService:
             ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ]))
         
+        # 5. Amount in Words Banner (Placed directly after Total Amount)
+        amount_words = number_to_words_inr(document.total_amount)
+        words_style = ParagraphStyle(
+            name='AmountWords',
+            parent=styles['Normal'],
+            fontName=body_font,
+            fontSize=8.5,
+            leading=12,
+            textColor=TEXT_DARK
+        )
+        words_paragraph = Paragraph(f"<b>Amount in Words:</b> <i>{amount_words}</i>", words_style)
+        words_table = Table([[words_paragraph]], colWidths=[7.25 * inch])
+        words_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), LIGHT_ROSE),
+            ('BOX', (0, 0), (-1, -1), 0.75, BORDER_ROSE),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
         elements.append(KeepTogether([
             summary_table,
-            Spacer(1, 0.3 * inch)
+            Spacer(1, 0.10 * inch),
+            words_table,
+            Spacer(1, 0.25 * inch)
         ]))
         
         # 5. Signatory Block

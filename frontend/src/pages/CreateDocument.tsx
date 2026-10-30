@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, Trash2, Save, Send } from 'lucide-react';
 import api from '../services/api';
@@ -20,6 +20,7 @@ const CreateDocument = () => {
     payment_status: 'UNPAID',
     payment_mode: '',
     transaction_reference: '',
+    bank_details: '',
     notes: '',
     tax_type: 'INTRA_STATE',
     tax_rate: 0,
@@ -30,6 +31,23 @@ const CreateDocument = () => {
   });
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCompanySettings = async () => {
+      try {
+        const res = await api.get('/settings/company');
+        if (res.data && res.data.bank_details) {
+          setFormData(prev => ({
+            ...prev,
+            bank_details: prev.bank_details || res.data.bank_details
+          }));
+        }
+      } catch (err) {
+        // Fallback gracefully if not configured yet
+      }
+    };
+    fetchCompanySettings();
+  }, []);
 
   const calculateSubtotal = (items = formData.items) => {
     return items.reduce((sum, item) => sum + ((Number(item.quantity) || 0) * (Number(item.unit_price) || 0)), 0);
@@ -259,13 +277,27 @@ const CreateDocument = () => {
           <div className="mt-8 border-t border-rose-100 pt-6 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bank & Payment Details
+                  <span className="text-xs text-gray-500 font-normal ml-2">(printed on this invoice)</span>
+                </label>
+                <textarea 
+                  name="bank_details" 
+                  rows={3} 
+                  value={formData.bank_details} 
+                  onChange={handleInputChange} 
+                  placeholder="Bank Name, A/C No, IFSC, UPI ID..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none text-sm font-mono"
+                ></textarea>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
                 <textarea 
                   name="notes" 
-                  rows={3} 
+                  rows={2} 
                   value={formData.notes} 
                   onChange={handleInputChange} 
-                  placeholder="Terms, bank account details, or payment instructions..."
+                  placeholder="Terms, delivery instructions, or custom notes..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none text-sm"
                 ></textarea>
               </div>

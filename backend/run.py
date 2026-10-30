@@ -34,6 +34,7 @@ def init_db():
                     conn.execute(db.text("ALTER TABLE document ADD COLUMN IF NOT EXISTS sgst_amount FLOAT DEFAULT 0.0;"))
                     conn.execute(db.text("ALTER TABLE document ADD COLUMN IF NOT EXISTS igst_rate FLOAT DEFAULT 0.0;"))
                     conn.execute(db.text("ALTER TABLE document ADD COLUMN IF NOT EXISTS igst_amount FLOAT DEFAULT 0.0;"))
+                    conn.execute(db.text("ALTER TABLE document ADD COLUMN IF NOT EXISTS bank_details TEXT;"))
                     conn.commit()
                 elif dialect == 'sqlite':
                     for col_sql in [
@@ -44,7 +45,8 @@ def init_db():
                         "ALTER TABLE document ADD COLUMN sgst_rate FLOAT DEFAULT 0.0;",
                         "ALTER TABLE document ADD COLUMN sgst_amount FLOAT DEFAULT 0.0;",
                         "ALTER TABLE document ADD COLUMN igst_rate FLOAT DEFAULT 0.0;",
-                        "ALTER TABLE document ADD COLUMN igst_amount FLOAT DEFAULT 0.0;"
+                        "ALTER TABLE document ADD COLUMN igst_amount FLOAT DEFAULT 0.0;",
+                        "ALTER TABLE document ADD COLUMN bank_details TEXT;"
                     ]:
                         try:
                             conn.execute(db.text(col_sql))

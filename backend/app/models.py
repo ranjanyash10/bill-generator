@@ -81,6 +81,7 @@ class Document(db.Model):
     
     payment_mode = db.Column(db.String(50), nullable=True)
     transaction_reference = db.Column(db.String(255), nullable=True)
+    bank_details = db.Column(db.Text, nullable=True)
     notes = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
